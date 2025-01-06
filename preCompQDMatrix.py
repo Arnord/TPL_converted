@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import combinations
-
+import tools
 
 def preCompQDMatrix(TM):
     """
@@ -30,16 +30,18 @@ def preCompQDMatrix(TM):
     n = TM.shape[0]
 
     # Generate all pairs of indices
-    pairs_forward = list(combinations(range(n), 2))
-    pairs_backward = [(j, i) for i, j in pairs_forward]
-    pairs = np.array(pairs_forward + pairs_backward).T
+    pairs = np.array(list(combinations(range(1, n + 1), 2)))  # 生成所有 2-组合，索引从 1 开始
+    # 对 pairs 的每一行进行翻转
+    flipped_pairs = np.fliplr(pairs)
+    # 将 pairs 和 flipped_pairs 垂直拼接
+    pairs = np.vstack((pairs, flipped_pairs))
 
     # Extract QM and DM from transition matrix
-    QM = TM[pairs[0, :], :]
-    DM = TM[pairs[1, :], :]
+    QM = TM[pairs[0, :] - 1, :]
+    DM = TM[pairs[1, :] - 1, :]
 
     # Sort QM and DM in descending order based on their ratio
-    QM, DM = sortRatioM1M2_DES(QM, DM)
+    QM, DM = tools.sortRatioM1M2_DES(QM, DM)
 
     # Create indicator matrix for Q > D
     QDplusInd = QM > DM
@@ -57,8 +59,9 @@ def preCompQDMatrix(TM):
     dM = dM * QDplusInd
 
     # Compute EspMatrix
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide='ignore', invalid='ignore'):   # ignore compute error
         EspMatrix = np.log((QM - DM) / (qM * DM - QM * dM) + 1)
+    # EspMatrix = np.log((QM - DM) / (qM * DM - QM * dM) + 1)
 
     return EspMatrix, qM, dM, QDplusInd
 

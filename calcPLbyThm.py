@@ -20,11 +20,16 @@ from itertools import combinations
 def calcPLbyThm(TM, a):
     # transition matrix M, previous BPL a
     n = TM.shape[0]
-    pairs = np.array(list(combinations(range(1, n + 1), 2)))
-    pairs = np.vstack((pairs, pairs[:, ::-1]))
+    # pairs = VChooseK(int16(1:n), 2)
+    # pairs = [pairs; filplr(pairs)];
+    pairs = np.array(list(combinations(range(1, n + 1), 2)))  # 生成所有 2-组合，索引从 1 开始
+    # 对 pairs 的每一行进行翻转
+    flipped_pairs = np.fliplr(pairs)
+    # 将 pairs 和 flipped_pairs 垂直拼接
+    pairs = np.vstack((pairs, flipped_pairs))
 
-    QM = TM[pairs[:, 0] - 1, :]
-    DM = TM[pairs[:, 1] - 1, :]
+    QM = TM[pairs[0, :] - 1, :]
+    DM = TM[pairs[1, :] - 1, :]
 
     QDplusInd = QM > DM
     QM = QM * QDplusInd
@@ -35,7 +40,8 @@ def calcPLbyThm(TM, a):
         sizeRemain = np.sum(QDplusInd)
         valArr = (np.sum(QM, axis=1) * (np.exp(a) - 1) + 1) / (np.sum(DM, axis=1) * (np.exp(a) - 1) + 1)
         QDplusIndNew = QM / DM > valArr[:, np.newaxis]
-        if sizeRemain == np.sum(QDplusIndNew):
+        sizeRemainNew = np.sum(QDplusIndNew)
+        if sizeRemain == sizeRemainNew:
             update = False
         else:
             idx = np.where(QDplusIndNew != QDplusInd)

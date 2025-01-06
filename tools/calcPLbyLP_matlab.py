@@ -4,7 +4,7 @@ from scipy.optimize import linprog
 from itertools import combinations
 
 
-def calcPLbyLP_python(Q, D, a):
+def calcPLbyLP_matalb(Q, D, a):
     """
     Can be also used for calculate FPL
     Note: some precision problem could happen when a is large (e.g. a>30)

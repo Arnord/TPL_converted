@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 import os
 import sys
+from tools import *
+from preCompQDMatrix import preCompQDMatrix
+from genLFunc import genLFunc
 
 # Add tools directory to path
 sys.path.append('tools/')

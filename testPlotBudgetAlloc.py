@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from preCompQDMatrix import preCompQDMatrix
+from tools import *
+from genLFunc import genLFunc
 #=========================================
 # plot two figures of privacy budget allocation schemes
 # for satisfying the desired TPL
@@ -30,7 +32,7 @@ an = 100
 EspMatrix_F, qM_F, dM_F, QDplusInd_F = preCompQDMatrix(TM_F)
 aArrMax_F, qArrMax_F, dArrMax_F = genLFunc(a1, an, EspMatrix_F, qM_F, dM_F)
 
-# alloc budget by upper bound
+# alloc budget by upper bound # TODO No Definition !
 a = 1
 e = allocEspByUpperBound(a, TM_B, TM_F)
 eArr = np.ones(T) * e

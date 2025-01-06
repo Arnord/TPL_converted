@@ -3,11 +3,18 @@
 #
 # 05-Dec-2017 author: Yang Cao
 #=========================================
-import sys
-sys.path.append('tools/')
+# import sys
+# sys.path.append('tools/')
 
 import numpy as np
 from time import time
+# from tools import *
+from calcPLbyLP import calcPLbyLP
+from calcPLbyFunc import calcPLbyFunc
+from calcPLbyThm import calcPLbyThm
+from calcPLbyPreComp import calcPLbyPreComp
+from preCompQDMatrix import preCompQDMatrix
+from genLFunc import genLFunc
 
 # Clear variables (not needed in Python as variables are scoped)
 

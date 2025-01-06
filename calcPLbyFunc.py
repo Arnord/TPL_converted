@@ -36,7 +36,6 @@
 
 import numpy as np
 
-
 def calcPLbyFunc(a, aArrMax, qArrMax, dArrMax):
     if len(aArrMax) == 0:
         maxBPL = 0
@@ -45,9 +44,15 @@ def calcPLbyFunc(a, aArrMax, qArrMax, dArrMax):
     else:
         if a > aArrMax[-1]:
             raise ValueError('a should be in the range of aArrMax')
-        idx = np.sum(aArrMax < a) + 1
+
+        # 找到 a 在 aArrMax 中的位置
+        idx = np.sum(aArrMax < a)
+
+        # 提取对应的 q 和 d
         q = qArrMax[idx]
         d = dArrMax[idx]
+
+        # 计算 maxBPL
         maxBPL = np.log((q * (np.exp(a) - 1) + 1) / (d * (np.exp(a) - 1) + 1))
 
     return maxBPL, q, d

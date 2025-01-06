@@ -1,67 +1,51 @@
 import numpy as np
-from scipy.sparse import csr_matrix
-from cplex import Cplex
-
+import scipy.sparse as sp
+import cplex
+from itertools import combinations
 
 def calcPLbyLP_cplex(Q, D, a):
-    """
-    Can be also used for calculate FPL
-    Note: some precision problem could happen when a is large (e.g. a>30)
-    calcBPLbyPreComp.m and calcBPLbyFunc.m have no precision problem
-    """
     n = Q.shape[1]  # size of variables yi
-    m = n * (n - 1) // 2  # size of contraints  exp(-a)<=yi  OR   yj<=exp(a)
+    m = n * (n - 1) // 2  # size of constraints exp(-a) <= yi OR yj <= exp(a)
 
-    # constraints  exp(-a)<=yi/yj<=exp(a)
-    # i.e.:  exp(-a)*yj -yi<=0    yi-exp(a)*yj<=0
-    row = np.tile(np.arange(1, 2 * m + 1), (2, 1))
-    row = row.flatten(order='F')
-
-    # Generate combinations for column indices
-    col_idx = []
-    for i in range(n):
-        for j in range(i + 1, n):
-            col_idx.append([i, j])
-    col = np.array(col_idx).T
-    col = np.concatenate([col.flatten(), col.flatten()])
-
+    # Generate all pairs (i,j) where i < j
+    pairs = np.array(list(combinations(range(n), 2)))
+    row = np.repeat(np.arange(2 * m), 2)
+    col = np.hstack([pairs, pairs[:, ::-1]]).flatten()
     val = np.concatenate([np.tile([-np.exp(a), 1], m), np.tile([1, -np.exp(a)], m)])
 
-    # Create sparse matrix for inequality constraints
-    Aineq = csr_matrix((val, (row - 1, col)), shape=(2 * m, n))
-    bineq = np.zeros(2 * m)
+    Aineq = sp.csr_matrix((val, (row, col)), shape=(2 * m, n))
 
-    # Create CPLEX problem
-    prob = Cplex()
+    bineq = np.zeros(2 * m)  # NOTE: COLUMN vec for cplexlp (diff from linprog)
 
-    # Minimize objective function
+    # constraints D'*yi = 1
+    Aeq = D.T
+    beq = np.array([1])
+
+    # min f
+    f = -Q.T  # NOTE: COLUMN vec for cplexlp (diff from linprog)
+
+    # Set up the CPLEX problem
+    prob = cplex.Cplex()
     prob.objective.set_sense(prob.objective.sense.minimize)
-
-    # Add variables
-    prob.variables.add(obj=(-Q).flatten())
-
-    # Add inequality constraints
-    prob.linear_constraints.add(
-        lin_expr=[[[range(n), row.tolist()] for row in Aineq.toarray()]],
-        senses=["L"] * (2 * m),
-        rhs=bineq.tolist()
-    )
-
-    # Add equality constraint D'*yi=1
-    prob.linear_constraints.add(
-        lin_expr=[[[range(n), D.tolist()]]],
-        senses=["E"],
-        rhs=[1.0]
-    )
+    prob.variables.add(obj=f.flatten(), lb=[0]*n, ub=[cplex.infinity]*n)
+    prob.linear_constraints.add(rhs=bineq.tolist(), senses="L" * len(bineq), lin_expr=[cplex.SparsePair(ind=list(range(n)), val=Aineq[i, :].toarray().flatten().tolist()) for i in range(Aineq.shape[0])])
+    prob.linear_constraints.add(rhs=beq.tolist(), senses="E" * len(beq), lin_expr=[cplex.SparsePair(ind=list(range(n)), val=Aeq.flatten().tolist())])
 
     # Solve the problem
     prob.solve()
 
-    # Get solution
-    x = np.array(prob.solution.get_values())
+    # Get the solution
+    x = prob.solution.get_values()
     fval = prob.solution.get_objective_value()
 
-    bpl = np.log(-fval)  # linprog find min, we multiply -1* f
+    bpl = np.log(-fval)  # linprog finds min, we multiply -1 * f
 
     return bpl, x
 
+# Example usage
+# Q = np.array([[1, 2], [3, 4]])
+# D = np.array([[1], [1]])
+# a = 1
+# bpl, x = calcPLbyLP_cplex(Q, D, a)
+# print("bpl:", bpl)
+# print("x:", x)

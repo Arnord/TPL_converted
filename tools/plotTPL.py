@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from preCompQDMatrix import preCompQDMatrix
+from genLFunc import genLFunc
+from calcPLbyFunc import calcPLbyFunc
 
 def plotTPL(eArr, TM_B, TM_F, printTPL):
     EspMatrix_B, qM_B, dM_B, QDplusInd_B = preCompQDMatrix(TM_B)

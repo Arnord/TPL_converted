@@ -1,52 +1,54 @@
-#=========================================
-# plot two figures of privacy budget allocation schemes
-# for stisfying the desired TPL
-# 05-Dec-2017 author: Yang Cao
-#=========================================
-import sys
-sys.path.append('tools/')
+# %=========================================
+# % test findSup. comparing the results of findSup with the one calculated
+# % step by step until the BPL (or FPL) is stable.
+# %
+# % There are different test cases.
+
+
 
 import numpy as np
+from tools import *
+from preCompQDMatrix import preCompQDMatrix
+from genLFunc import genLFunc
+from findSup import findSup
+from calcPLbyFunc import calcPLbyFunc
 import matplotlib.pyplot as plt
 
-T = 30
-
-## initialize random TMs
-n = 10
+# Test case 1 of sup (q!=0/1 d!=0/1)
+n = 5
 m = np.abs(np.random.normal(1, 1, (n, n)))
 di = np.sum(m, axis=1)
-TM_B = m / di[:, np.newaxis]
+TM = m / di[:, np.newaxis]
 
-m = np.abs(np.random.normal(2, 1, (n, n)))
-di = np.sum(m, axis=1)
-TM_F = m / di[:, np.newaxis]
+e = 0.1
 
-## precomputation
+# FindSup
 a1 = 0
-an = 100
-EspMatrix_B, qM_B, dM_B, QDplusInd_B = preCompQDMatrix(TM_B)
-aArrMax_B, qArrMax_B, dArrMax_B = genLFunc(a1, an, EspMatrix_B, qM_B, dM_B)
+an = 10
+EspMatrix, qM, dM, QDplusInd = preCompQDMatrix(TM)
+aArrMax, qArrMax, dArrMax = genLFunc(a1, an, EspMatrix, qM, dM)
 
-a1 = 0
-an = 100
-EspMatrix_F, qM_F, dM_F, QDplusInd_F = preCompQDMatrix(TM_F)
-aArrMax_F, qArrMax_F, dArrMax_F = genLFunc(a1, an, EspMatrix_F, qM_F, dM_F)
+# Timing the execution
+import time
+start_time = time.time()
+maxSup, q_sup, d_sup = findSup(TM, e, qM, dM, QDplusInd)
+end_time = time.time()
 
-## alloc budget by upper bound
-a = 1
-e = allocEspByUpperBound(a, TM_B, TM_F)
-eArr = np.ones(T) * e
+# Print results
+# print(maxSup)
+# print(q_sup)
+# print(d_sup)
 
-print('\033[94malloc budget by upper bound\033[0m')
-printTPL = 1
-plotTPL(eArr, TM_B, TM_F, printTPL)
+# Calculate by TM
+T = 200
+aArr = np.zeros(T)
+aArr[0] = e
+for i in range(1, T):
+    # print(f't={i}')
+    maxBPL, q, d = calcPLbyFunc(aArr[i-1], aArrMax, qArrMax, dArrMax)
+    aArr[i] = maxBPL + e
 
-## alloc budget by quantification
-a = 1
-e_s, e_mid, e_end = allocEspByQuantify(a, TM_B, TM_F)
-eArr_mid = np.ones(T-2) * e_mid
-eArr = np.concatenate(([e_s], eArr_mid, [e_end]))
+aArr[T-1]
+plt.plot(aArr)  # Uncomment to plot if needed
+plt.show()
 
-print('\033[94malloc budget by quantification\033[0m')
-printTPL = 1
-plotTPL(eArr, TM_B, TM_F, printTPL)

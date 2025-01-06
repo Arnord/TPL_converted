@@ -15,7 +15,7 @@
 
 import numpy as np
 from itertools import combinations
-
+from tools import *
 
 def calcPLbyLP(TM, a, method):
     n = TM.shape[1]  # n = size(TM, 2) same?
@@ -24,12 +24,17 @@ def calcPLbyLP(TM, a, method):
 
     # pairs = VChooseK(int16(1:n), 2)
     # pairs = [pairs; filplr(pairs)];
-    pairs = np.array(list(combinations(range(1, n + 1), 2)))
-    pairs = np.vstack((pairs, np.fliplr(pairs)))
+    pairs = list(combinations(range(1, n + 1), 2))  # 生成所有 2-组合，索引从 1 开始
+    # 将 pairs 转换为 numpy 数组
+    pairs = np.array(pairs)
+    # 对 pairs 的每一行进行翻转
+    flipped_pairs = np.fliplr(pairs)
+    # 将 pairs 和 flipped_pairs 垂直拼接
+    pairs = np.vstack((pairs, flipped_pairs))
 
     for eachPair in pairs:
-        v1 = TM[eachPair[0] - 1, :]  # Adjust for 0-based indexing
-        v2 = TM[eachPair[1] - 1, :]  # Adjust for 0-based indexing
+        v1 = TM[eachPair[0] - 1, :].reshape(1, -1)  # Adjust for 0-based indexing
+        v2 = TM[eachPair[1] - 1, :].reshape(1, -1)  # Adjust for 0-based indexing
 
         if method == 'cplex':
             bpl, x = calcPLbyLP_cplex(v1, v2, a)

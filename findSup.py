@@ -20,8 +20,9 @@
 
 import numpy as np
 from itertools import combinations
+from tools import *
 
-def find_sup(TM, e, qM=None, dM=None, QDplusInd=None):
+def findSup(TM, e, qM=None, dM=None, QDplusInd=None):
     if qM is None or dM is None or QDplusInd is None:
         n = TM.shape[0]
         pairs = np.array(list(combinations(range(1, n + 1), 2)))
